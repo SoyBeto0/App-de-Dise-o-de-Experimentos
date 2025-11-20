@@ -64,7 +64,6 @@ ui <- fluidPage(
       .btn-primary:hover {
         background-color: #2d83bb !important;
       }
-
     '))
   ),
 
@@ -91,7 +90,7 @@ ui <- fluidPage(
 
           actionButton("run", "Ejecutar Experimento",
                        class = "btn btn-primary",
-                       style="margin-top:15px;")
+                       style = "margin-top:15px;")
       )
     ),
 
@@ -100,21 +99,39 @@ ui <- fluidPage(
           tabsetPanel(
             tabPanel("📋 Diseño",
                      tableOutput("designTable")),
+
             tabPanel("📊 Resultados",
                      tableOutput("resultsTable")),
+
             tabPanel("📈 Análisis ANOVA",
                      verbatimTextOutput("anovaOutput")),
+
             tabPanel("📌 Gráfica de Interacción",
                      plotOutput("interactionPlot")),
 
-            # 🔹 NUEVA PESTAÑA
+            # 🔹 PESTAÑA: efectos del modelo 2^2 simulado
             tabPanel("✨ Efectos principales",
-                     h4("Efectos principales e interacción"),
+                     h4("Efectos principales e interacción (modelo 2^2)"),
                      tableOutput("tabla_efectos"),
                      br(),
-                     plotOutput("graf_efectos"))
+                     plotOutput("graf_efectos")),
+
+            # 🔹 PESTAÑA: actividad 2^4 con A, B, C, D e IF
+            tabPanel("📄 2^4 A, B, C, D",
+                     h4("Introduce los valores de IF para cada combinación de niveles"),
+                     uiOutput("inputs_if_2k4"),
+                     br(),
+                     actionButton("calcular_2k4", "Calcular efectos 2^4",
+                                  class = "btn btn-primary"),
+                     br(), br(),
+                     h4("Diseño 2^4 con IF"),
+                     tableOutput("tabla_diseno_2k4"),
+                     br(),
+                     h4("Efectos principales e interacciones (AB, CD, BCD, ABCD)"),
+                     tableOutput("tabla_efectos_2k4"))
           )
       )
     )
   )
 )
+
