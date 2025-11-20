@@ -77,34 +77,44 @@ ui <- fluidPage(
 
     sidebarPanel(
       div(class="card",
-        h4("Parámetros del Experimento", style="font-weight:700; color:#2c3e50;"),
+          h4("Parámetros del Experimento",
+             style="font-weight:700; color:#2c3e50;"),
 
-        numericInput("rep", "Número de Replicaciones:", 2, min = 1, max = 10),
-        selectInput("factorA", "Niveles del Factor A:", choices = c("Low" = -1, "High" = 1)),
-        selectInput("factorB", "Niveles del Factor B:", choices = c("Low" = -1, "High" = 1)),
+          numericInput("rep", "Número de Replicaciones:",
+                       value = 2, min = 1, max = 10),
 
-        actionButton("run", "Ejecutar Experimento", class = "btn btn-primary", 
-                     style="margin-top:15px;")
+          selectInput("factorA", "Niveles del Factor A:",
+                      choices = c("Low" = -1, "High" = 1)),
+
+          selectInput("factorB", "Niveles del Factor B:",
+                      choices = c("Low" = -1, "High" = 1)),
+
+          actionButton("run", "Ejecutar Experimento",
+                       class = "btn btn-primary",
+                       style="margin-top:15px;")
       )
     ),
 
     mainPanel(
       div(class="card",
-        tabsetPanel(
-          tabPanel("📋 Diseño", tableOutput("designTable")),
-          tabPanel("📊 Resultados", tableOutput("resultsTable")),
-          tabPanel("📈 Análisis ANOVA", verbatimTextOutput("anovaOutput")),
-          tabPanel("📌 Gráfica de Interacción", plotOutput("interactionPlot"))
+          tabsetPanel(
+            tabPanel("📋 Diseño",
+                     tableOutput("designTable")),
+            tabPanel("📊 Resultados",
+                     tableOutput("resultsTable")),
+            tabPanel("📈 Análisis ANOVA",
+                     verbatimTextOutput("anovaOutput")),
+            tabPanel("📌 Gráfica de Interacción",
+                     plotOutput("interactionPlot")),
 
-          # 🔹 NUEVA PESTAÑA
-  tabPanel("✨ Efectos principales",
-           h4("Efectos principales e interacción"),
-           tableOutput("tabla_efectos"),
-           br(),
-           plotOutput("graf_efectos")
-        )
+            # 🔹 NUEVA PESTAÑA
+            tabPanel("✨ Efectos principales",
+                     h4("Efectos principales e interacción"),
+                     tableOutput("tabla_efectos"),
+                     br(),
+                     plotOutput("graf_efectos"))
+          )
       )
     )
   )
 )
-
