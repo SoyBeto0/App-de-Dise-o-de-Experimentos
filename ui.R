@@ -1,7 +1,8 @@
 ui <- fluidPage(
   titlePanel("Factorial Diseño de Experimento (2^k)"),
-  sidebarLayout(
+  titlePanel("Diseño Factorial (2^K)"),
 
+  sidebarLayout(
     sidebarPanel(
       numericInput("rep", "Number of Replications:", 2, min = 1, max = 10),
       selectInput("factorA", "Factor A Levels:", choices = c("Low" = -1, "High" = 1)),
