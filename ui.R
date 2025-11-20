@@ -1,5 +1,5 @@
 ui <- fluidPage(
-  titlePanel("Factorial Design Experiment (2^2)"),
+  titlePanel("Diseño Factorial (2^K)"),
   sidebarLayout(
     sidebarPanel(
       numericInput("rep", "Number of Replications:", 2, min = 1, max = 10),
