@@ -95,6 +95,13 @@ ui <- fluidPage(
           tabPanel("📊 Resultados", tableOutput("resultsTable")),
           tabPanel("📈 Análisis ANOVA", verbatimTextOutput("anovaOutput")),
           tabPanel("📌 Gráfica de Interacción", plotOutput("interactionPlot"))
+
+          # 🔹 NUEVA PESTAÑA
+  tabPanel("✨ Efectos principales",
+           h4("Efectos principales e interacción"),
+           tableOutput("tabla_efectos"),
+           br(),
+           plotOutput("graf_efectos")
         )
       )
     )
