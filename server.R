@@ -66,7 +66,7 @@ server <- function(input, output, session) {
     )
   }
 
-  # Efectos principales de A, B e interacción AB (modelo 2^2)
+  # Efectos principales de A, B e interacción AB (modelo 2^2 simulado)
   efectos_df <- reactive({
     d <- simulate_results()
     req(d)
@@ -112,64 +112,60 @@ server <- function(input, output, session) {
   })
 
   # =========================================================
-  # PARTE 2: Actividad 2^4 (A, B, C, D, IF ingresado por el usuario)
+  # PARTE 2: Tabla editable A,B,C,D (+/-) e IF (tipo actividad)
   # =========================================================
 
-  # Diseño 2^4 fijo (A,B,C,D = -1,+1)
-  design_2k4 <- reactive({
-    expand.grid(
-      A = c(-1, 1),
-      B = c(-1, 1),
-      C = c(-1, 1),
-      D = c(-1, 1)
-    )
-  })
-
-  # UI dinámico para capturar los 16 valores de IF
-  output$inputs_if_2k4 <- renderUI({
-    d <- design_2k4()
+  # Dibujamos 16 corridas: inputs de signos y IF
+  output$tabla_signos_if <- renderUI({
+    n <- 16  # como el ejemplo 2^4 de la actividad
 
     tagList(
-      lapply(1:nrow(d), function(i) {
+      lapply(1:n, function(i) {
         fluidRow(
-          column(
-            7,
-            tags$p(
-              sprintf("Corrida %02d:  A=%2d  B=%2d  C=%2d  D=%2d",
-                      i, d$A[i], d$B[i], d$C[i], d$D[i])
-            )
-          ),
-          column(
-            5,
-            numericInput(
-              inputId = paste0("if4_", i),
-              label   = "IF:",
-              value   = NA
-            )
-          )
+          column(1, tags$p(sprintf("%02d", i))),
+          column(2, selectInput(
+            paste0("A_tab_", i), "A",
+            choices = c("-" = -1, "+" = 1)
+          )),
+          column(2, selectInput(
+            paste0("B_tab_", i), "B",
+            choices = c("-" = -1, "+" = 1)
+          )),
+          column(2, selectInput(
+            paste0("C_tab_", i), "C",
+            choices = c("-" = -1, "+" = 1)
+          )),
+          column(2, selectInput(
+            paste0("D_tab_", i), "D",
+            choices = c("-" = -1, "+" = 1)
+          )),
+          column(3, numericInput(
+            paste0("IF_tab_", i), "IF",
+            value = NA
+          ))
         )
       })
     )
   })
 
-  # Data.frame 2^4 con la columna IF que escribe el usuario
-  datos_2k4 <- eventReactive(input$calcular_2k4, {
-    d <- design_2k4()
-    d$IF <- sapply(1:nrow(d), function(i) input[[paste0("if4_", i)]])
-    d
+  # Construimos el data.frame a partir de lo que escribió el usuario
+  datos_tabla <- eventReactive(input$calcular_tabla, {
+    n <- 16
+
+    data.frame(
+      A  = sapply(1:n, function(i) as.numeric(input[[paste0("A_tab_", i)]])),
+      B  = sapply(1:n, function(i) as.numeric(input[[paste0("B_tab_", i)]])),
+      C  = sapply(1:n, function(i) as.numeric(input[[paste0("C_tab_", i)]])),
+      D  = sapply(1:n, function(i) as.numeric(input[[paste0("D_tab_", i)]])),
+      IF = sapply(1:n, function(i) as.numeric(input[[paste0("IF_tab_", i)]]))
+    )
   })
 
-  # Mostrar el diseño 2^4 con IF
-  output$tabla_diseno_2k4 <- renderTable({
-    req(datos_2k4())
-    datos_2k4()
-  })
-
-  # Efectos principales e interacciones AB, CD, BCD, ABCD
-  efectos_2k4 <- reactive({
-    d <- datos_2k4()
+  # Efectos principales A,B,C,D y las interacciones AB, CD, BCD, ABCD
+  efectos_tabla <- reactive({
+    d <- datos_tabla()
     req(d)
-    req(!any(is.na(d$IF)))  # asegúrate de que no falte ningún IF
+    req(!any(is.na(d$IF)))  # que no falte ningún IF
 
     lista <- list(
       calcular_efecto(d, "A",  respuesta = "IF"),          # A
@@ -185,7 +181,7 @@ server <- function(input, output, session) {
     do.call(rbind, lista)
   })
 
-  output$tabla_efectos_2k4 <- renderTable({
-    efectos_2k4()
+  output$tabla_efectos_tabla <- renderTable({
+    efectos_tabla()
   }, digits = 3)
 }
