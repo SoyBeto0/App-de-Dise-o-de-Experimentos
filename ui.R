@@ -109,29 +109,26 @@ ui <- fluidPage(
             tabPanel("📌 Gráfica de Interacción",
                      plotOutput("interactionPlot")),
 
-            # 🔹 PESTAÑA: efectos del modelo 2^2 simulado
+            # Pestaña de efectos del modelo 2^2 simulado
             tabPanel("✨ Efectos principales",
                      h4("Efectos principales e interacción (modelo 2^2)"),
                      tableOutput("tabla_efectos"),
                      br(),
                      plotOutput("graf_efectos")),
 
-            # 🔹 PESTAÑA: actividad 2^4 con A, B, C, D e IF
-            tabPanel("📄 2^4 A, B, C, D",
-                     h4("Introduce los valores de IF para cada combinación de niveles"),
-                     uiOutput("inputs_if_2k4"),
+            # NUEVA PESTAÑA: tabla editable A,B,C,D (+/-) e IF
+            tabPanel("✏️ Tabla A, B, C, D, IF",
+                     h4("Edita los signos de A, B, C, D (+ / -) y los valores de IF"),
+                     p("Se usan 16 corridas (como en un diseño 2^4)."),
+                     uiOutput("tabla_signos_if"),
                      br(),
-                     actionButton("calcular_2k4", "Calcular efectos 2^4",
+                     actionButton("calcular_tabla", "Calcular efectos",
                                   class = "btn btn-primary"),
                      br(), br(),
-                     h4("Diseño 2^4 con IF"),
-                     tableOutput("tabla_diseno_2k4"),
-                     br(),
                      h4("Efectos principales e interacciones (AB, CD, BCD, ABCD)"),
-                     tableOutput("tabla_efectos_2k4"))
+                     tableOutput("tabla_efectos_tabla"))
           )
       )
     )
   )
 )
-
