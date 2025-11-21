@@ -4,7 +4,7 @@ library(shiny)
 # Función general para calcular un efecto
 # ================================
 calcular_efecto <- function(df, vars, respuesta = "Y") {
-  # vars: c("A"), c("B"), c("A","B"), etc.
+  # vars: "A" o c("A","B"), etc.
   # producto de los signos (+1, -1)
   signo <- apply(df[, vars, drop = FALSE], 1, prod)
 
@@ -112,85 +112,94 @@ server <- function(input, output, session) {
   })
 
   # =========================================================
-  # PARTE 2: Tabla editable A,B,C,D (+/-) e IF (tipo actividad)
+  # PARTE 2: Tabla editable 2^k (A,B,C,D,..., IF)
   # =========================================================
 
-  # Dibujamos 16 corridas: inputs de signos y IF
+  # Generar la tabla de signos e IF para 2^k corridas
   output$tabla_signos_if <- renderUI({
-    n <- 16  # como el ejemplo 2^4 de la actividad
+    # número de factores k (por defecto 4 si aún no hay input)
+    k <- input$k_tabla
+    if (is.null(k)) k <- 4
 
+    # nombres de factores: A, B, C, ...
+    factores <- LETTERS[1:k]
+
+    # número de corridas: 2^k
+    n <- 2^k
+
+    # diseño base 2^k en -1 / +1 (por si quieres usarlo luego)
+    # aquí no lo usamos directamente, solo generamos los inputs
     tagList(
       lapply(1:n, function(i) {
         fluidRow(
           column(1, tags$p(sprintf("%02d", i))),
-          column(2, selectInput(
-            paste0("A_tab_", i), "A",
-            choices = c("-" = -1, "+" = 1)
-          )),
-          column(2, selectInput(
-            paste0("B_tab_", i), "B",
-            choices = c("-" = -1, "+" = 1)
-          )),
-          column(2, selectInput(
-            paste0("C_tab_", i), "C",
-            choices = c("-" = -1, "+" = 1)
-          )),
-          column(2, selectInput(
-            paste0("D_tab_", i), "D",
-            choices = c("-" = -1, "+" = 1)
-          )),
-          column(3, numericInput(
-            paste0("IF_tab_", i), "IF",
-            value = NA
-          ))
+          # columnas de factores A, B, C, ...
+          lapply(seq_along(factores), function(j) {
+            f <- factores[j]
+            column( floor(8 / k),  # ancho aproximado para que quepan
+                    selectInput(
+                      inputId  = paste0(f, "_tab_", i),
+                      label    = f,
+                      choices  = c("-" = -1, "+" = 1)
+                    )
+            )
+          }),
+          # columna de IF
+          column(3,
+                 numericInput(
+                   inputId = paste0("IF_tab_", i),
+                   label   = "IF",
+                   value   = NA
+                 )
+          )
         )
       })
     )
   })
 
-  # Construimos el data.frame a partir de lo que escribió el usuario
+  # Construir el data.frame a partir de lo que escribió el usuario
   datos_tabla <- eventReactive(input$calcular_tabla, {
-    n <- 16
+    k <- input$k_tabla
+    if (is.null(k)) k <- 4
+    factores <- LETTERS[1:k]
+    n <- 2^k
 
-    data.frame(
-      A  = sapply(1:n, function(i) as.numeric(input[[paste0("A_tab_", i)]])),
-      B  = sapply(1:n, function(i) as.numeric(input[[paste0("B_tab_", i)]])),
-      C  = sapply(1:n, function(i) as.numeric(input[[paste0("C_tab_", i)]])),
-      D  = sapply(1:n, function(i) as.numeric(input[[paste0("D_tab_", i)]])),
-      IF = sapply(1:n, function(i) as.numeric(input[[paste0("IF_tab_", i)]]))
-    )
+    # construir columnas de factores dinámicamente
+    cols_factores <- lapply(factores, function(f) {
+      sapply(1:n, function(i) as.numeric(input[[paste0(f, "_tab_", i)]]))
+    })
+    names(cols_factores) <- factores
+
+    # columna IF
+    col_IF <- sapply(1:n, function(i) as.numeric(input[[paste0("IF_tab_", i)]]))
+
+    df <- as.data.frame(cols_factores)
+    df$IF <- col_IF
+    df
   })
 
-  # Efectos principales A,B,C,D y las interacciones AB, CD, BCD, ABCD
-  # usando SOLO las filas que sí tienen IF
+  # Efectos principales para cada factor (A, B, C, ..., según k)
   efectos_tabla <- reactive({
     d <- datos_tabla()
     req(d)
 
-    # nos quedamos solo con las filas que sí tengan IF
+    # usar solo filas con IF válido
     d <- d[!is.na(d$IF), ]
-
-    # si no hay ninguna fila con IF, no calculamos nada
     if (nrow(d) == 0) {
       return(NULL)
     }
 
-    lista <- list(
-      calcular_efecto(d, "A",  respuesta = "IF"),          # A
-      calcular_efecto(d, "B",  respuesta = "IF"),          # B
-      calcular_efecto(d, "C",  respuesta = "IF"),          # C
-      calcular_efecto(d, "D",  respuesta = "IF"),          # D
-      calcular_efecto(d, c("A","B"),        "IF"),         # AB
-      calcular_efecto(d, c("C","D"),        "IF"),         # CD
-      calcular_efecto(d, c("B","C","D"),    "IF"),         # BCD
-      calcular_efecto(d, c("A","B","C","D"),"IF")          # ABCD
-    )
+    factores <- setdiff(names(d), "IF")  # nombres de factores presentes
+
+    lista <- lapply(factores, function(f) {
+      calcular_efecto(d, f, respuesta = "IF")
+    })
 
     do.call(rbind, lista)
   })
 
   output$tabla_efectos_tabla <- renderTable({
-    req(efectos_tabla())   # solo muestra si hay al menos un IF lleno
+    req(efectos_tabla())
     efectos_tabla()
   }, digits = 3)
 }
