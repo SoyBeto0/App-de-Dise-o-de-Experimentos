@@ -162,10 +162,18 @@ server <- function(input, output, session) {
   })
 
   # Efectos principales A,B,C,D y las interacciones AB, CD, BCD, ABCD
+  # usando SOLO las filas que sí tienen IF
   efectos_tabla <- reactive({
     d <- datos_tabla()
     req(d)
-    req(!any(is.na(d$IF)))  # que no falte ningún IF
+
+    # nos quedamos solo con las filas que sí tengan IF
+    d <- d[!is.na(d$IF), ]
+
+    # si no hay ninguna fila con IF, no calculamos nada
+    if (nrow(d) == 0) {
+      return(NULL)
+    }
 
     lista <- list(
       calcular_efecto(d, "A",  respuesta = "IF"),          # A
@@ -182,6 +190,7 @@ server <- function(input, output, session) {
   })
 
   output$tabla_efectos_tabla <- renderTable({
+    req(efectos_tabla())   # solo muestra si hay al menos un IF lleno
     efectos_tabla()
   }, digits = 3)
 }
