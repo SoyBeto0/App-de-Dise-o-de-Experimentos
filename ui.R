@@ -119,7 +119,7 @@ ui <- fluidPage(
             # NUEVA PESTAÑA: tabla editable A,B,C,D (+/-) e IF
             tabPanel("✏️ Tabla A, B, C, D, IF",
                      h4("Edita los signos de A, B, C, D (+ / -) y los valores de IF"),
-                     p("Se usan 16 corridas (como en un diseño 2^4)."),
+                     p("Se usan 16 corridas (como en un diseño 2^4, pero puedes dejar filas sin IF y solo se usan las que sí tengan valor)."),
                      uiOutput("tabla_signos_if"),
                      br(),
                      actionButton("calcular_tabla", "Calcular efectos",
@@ -132,3 +132,4 @@ ui <- fluidPage(
     )
   )
 )
+
