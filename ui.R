@@ -97,39 +97,58 @@ ui <- fluidPage(
     mainPanel(
       div(class="card",
           tabsetPanel(
+
+            # ------------------- PESTAÑA 1 --------------------
             tabPanel("📋 Diseño",
                      tableOutput("designTable")),
 
+            # ------------------- PESTAÑA 2 --------------------
             tabPanel("📊 Resultados",
                      tableOutput("resultsTable")),
 
+            # ------------------- PESTAÑA 3 --------------------
             tabPanel("📈 Análisis ANOVA",
                      verbatimTextOutput("anovaOutput")),
 
+            # ------------------- PESTAÑA 4 --------------------
             tabPanel("📌 Gráfica de Interacción",
                      plotOutput("interactionPlot")),
 
-            # Pestaña de efectos del modelo 2^2 simulado
+            # ------------------- PESTAÑA 5: EFECTOS 2^2 --------------------
             tabPanel("✨ Efectos principales",
                      h4("Efectos principales e interacción (modelo 2^2)"),
                      tableOutput("tabla_efectos"),
                      br(),
                      plotOutput("graf_efectos")),
 
-            # NUEVA PESTAÑA: tabla editable A,B,C,D (+/-) e IF
-            tabPanel("✏️ Tabla A, B, C, D, IF",
-                     h4("Edita los signos de A, B, C, D (+ / -) y los valores de IF"),
-                     p("Se usan 16 corridas (como en un diseño 2^4, pero puedes dejar filas sin IF y solo se usan las que sí tengan valor)."),
+            # ------------------- PESTAÑA 6: NUEVA 2^K --------------------
+            tabPanel("✏️ Tabla 2^k (factores y IF)",
+
+                     h4("Diseño factorial 2^k dinámico"),
+
+                     numericInput("k_tabla",
+                                  "Número de factores (k):",
+                                  min = 1, max = 6, value = 4),
+
+                     p("El diseño generará 2^k corridas con factores A, B, C, ...,
+                      y podrás editar los signos (+/-) y los valores de IF.
+                      Solo se usarán las filas que tengan IF."),
+
                      uiOutput("tabla_signos_if"),
+
                      br(),
-                     actionButton("calcular_tabla", "Calcular efectos",
+
+                     actionButton("calcular_tabla",
+                                  "Calcular efectos principales",
                                   class = "btn btn-primary"),
+
                      br(), br(),
-                     h4("Efectos principales e interacciones (AB, CD, BCD, ABCD)"),
-                     tableOutput("tabla_efectos_tabla"))
+
+                     h4("Efectos principales (modelo 2^k)"),
+                     tableOutput("tabla_efectos_tabla")
+            )
           )
       )
     )
   )
 )
-
