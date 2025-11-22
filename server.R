@@ -45,33 +45,50 @@ generar_todas_interacciones <- function(factores) {
 server <- function(input, output, session) {
 
   # =========================================================
-  # MODO 1: DISEÑO 2^K CON SIGNOS
+  # MODO 1: DISEÑO 2^K CON SIGNOS Y RÉPLICAS
   # =========================================================
 
-  # Generar automáticamente el diseño 2^k estándar (numérico -1 / +1)
+  # Generar automáticamente el diseño 2^k estándar con réplicas
   diseno_2k <- reactive({
     if (input$modo_analisis == "regresion_general") return(NULL)
 
     k <- input$k_factorial
     req(k)
+    
+    # Obtener número de réplicas (default = 1 si no existe aún)
+    num_rep <- input$num_replicas
+    if (is.null(num_rep)) num_rep <- 1
 
     factores <- LETTERS[1:k]
 
-    # Generar todas las combinaciones de -1 y 1
+    # Generar todas las combinaciones de -1 y 1 (diseño base)
     combinaciones <- expand.grid(rep(list(c(-1, 1)), k))
     names(combinaciones) <- factores
+
+    # Si hay réplicas, replicar el diseño completo
+    if (num_rep > 1) {
+      combinaciones_rep <- do.call(rbind, replicate(num_rep, combinaciones, simplify = FALSE))
+      combinaciones_rep$Replica <- rep(1:num_rep, each = 2^k)
+      combinaciones <- combinaciones_rep
+    }
 
     # Agregar columna de corrida
     combinaciones$Corrida <- 1:nrow(combinaciones)
 
     # Agregar columna Y vacía
     combinaciones$Y <- NA
-    combinaciones <- combinaciones[, c("Corrida", factores, "Y")]
+
+    # Reordenar columnas
+    if (num_rep > 1) {
+      combinaciones <- combinaciones[, c("Corrida", "Replica", factores, "Y")]
+    } else {
+      combinaciones <- combinaciones[, c("Corrida", factores, "Y")]
+    }
 
     return(combinaciones)
   })
 
-  # Mostrar tabla de diseño 2^k con signos como + y -
+  # Mostrar tabla de diseño 2^k con signos como + y - y réplicas como columnas
   output$tabla_diseno <- renderTable({
     if (input$modo_analisis == "regresion_general") return(NULL)
 
@@ -80,35 +97,78 @@ server <- function(input, output, session) {
 
     k <- input$k_factorial
     factores <- LETTERS[1:k]
+    num_rep <- input$num_replicas
+    if (is.null(num_rep)) num_rep <- 1
 
-    d_mostrar <- d
-    for (f in factores) {
-      d_mostrar[[f]] <- ifelse(d_mostrar[[f]] == 1, "+", "-")
+    # Si solo hay 1 réplica, mostrar formato simple
+    if (num_rep == 1) {
+      d_mostrar <- d
+      for (f in factores) {
+        d_mostrar[[f]] <- ifelse(d_mostrar[[f]] == 1, "+", "-")
+      }
+      return(d_mostrar[, c("Corrida", factores)])
     }
 
-    d_mostrar
+    # Si hay múltiples réplicas, reorganizar en columnas
+    # Crear tabla base con factores únicos
+    n_comb <- 2^k
+    d_base <- d[1:n_comb, c(factores)]
+    
+    # Convertir a + y -
+    for (f in factores) {
+      d_base[[f]] <- ifelse(d_base[[f]] == 1, "+", "-")
+    }
+    
+    # Agregar columnas de réplicas (vacías por ahora)
+    for (r in 1:num_rep) {
+      col_name <- paste0("Rep_", r)
+      d_base[[col_name]] <- NA
+    }
+    
+    # Agregar columna Factor al inicio
+    d_base <- cbind(Factor = 1:n_comb, d_base)
+    
+    return(d_base)
   })
 
-  # Inputs para Y en diseño 2^k
+  # Inputs para Y en diseño 2^k con réplicas en columnas
   output$inputs_respuesta <- renderUI({
     if (input$modo_analisis == "regresion_general") return(NULL)
 
     d <- diseno_2k()
     req(d)
 
-    n_corridas <- nrow(d)
+    k <- input$k_factorial
+    factores <- LETTERS[1:k]
+    num_rep <- input$num_replicas
+    if (is.null(num_rep)) num_rep <- 1
+    
+    n_comb <- 2^k
 
     tagList(
-      h5("Ingresa los valores de respuesta (Y/IF) para cada corrida:"),
-      lapply(1:n_corridas, function(i) {
+      h5("Ingresa los valores de respuesta para cada combinación y réplica:"),
+      
+      # Crear inputs organizados por combinación de factores
+      lapply(1:n_comb, function(i) {
+        # Obtener signos de los factores para esta combinación
+        signos <- sapply(factores, function(f) {
+          ifelse(d[[f]][i] == 1, "+", "-")
+        })
+        signos_text <- paste(signos, collapse = " ")
+        
+        # Crear inputs para cada réplica
         fluidRow(
-          column(2, tags$p(paste("Corrida", i, ":"))),
-          column(4, numericInput(
-            inputId = paste0("RESP_", i),
-            label   = NULL,
-            value   = NA,
-            width   = "100%"
-          ))
+          column(2, tags$p(paste0("Comb. ", i, " (", signos_text, "):"))),
+          lapply(1:num_rep, function(r) {
+            corrida_idx <- (r - 1) * n_comb + i
+            column(floor(10 / num_rep), 
+                   numericInput(
+                     inputId = paste0("RESP_", corrida_idx),
+                     label = if (i == 1) paste("Rep", r) else NULL,
+                     value = NA,
+                     width = "100%"
+                   ))
+          })
         )
       })
     )
@@ -296,15 +356,40 @@ server <- function(input, output, session) {
     }
 
     # En diseño 2^k: mostrar factores como + / -
-    k        <- input$k_factorial
+    k <- input$k_factorial
     factores <- LETTERS[1:k]
+    num_rep <- input$num_replicas
+    if (is.null(num_rep)) num_rep <- 1
 
-    resultado <- d
-    for (f in factores) {
-      resultado[[f]] <- ifelse(resultado[[f]] == 1, "+", "-")
+    # Si solo hay 1 réplica, formato simple
+    if (num_rep == 1) {
+      resultado <- d
+      for (f in factores) {
+        resultado[[f]] <- ifelse(resultado[[f]] == 1, "+", "-")
+      }
+      return(resultado)
     }
 
-    resultado
+    # Si hay múltiples réplicas, reorganizar en columnas
+    n_comb <- 2^k
+    d_base <- d[1:n_comb, factores, drop = FALSE]
+    
+    # Convertir a + y -
+    for (f in factores) {
+      d_base[[f]] <- ifelse(d_base[[f]] == 1, "+", "-")
+    }
+    
+    # Agregar columnas de réplicas con valores de Y
+    for (r in 1:num_rep) {
+      indices <- ((r-1) * n_comb + 1):(r * n_comb)
+      col_name <- paste0("Rep_", r)
+      d_base[[col_name]] <- d$Y[indices]
+    }
+    
+    # Agregar columna Factor al inicio
+    d_base <- cbind(Factor = 1:n_comb, d_base)
+    
+    return(d_base)
   })
 
   # =========================================================

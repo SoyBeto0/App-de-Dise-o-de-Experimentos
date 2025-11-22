@@ -92,35 +92,43 @@ ui <- fluidPage(
     sidebarPanel(
       div(class="card",
           h4("Configuración del Análisis", style="font-weight:700; color:#2c3e50;"),
-
+          
           div(class="instruccion",
-              p(style="margin:0; font-size:14px;",
+              p(style="margin:0; font-size:14px;", 
                 "🔬 Selecciona el tipo de problema que deseas resolver.")
           ),
-
+          
           # Selector de modo de análisis
           h5("Tipo de Análisis:", style="font-weight:600; margin-top:10px;"),
           radioButtons("modo_analisis",
-                       label   = NULL,
+                       label = NULL,
                        choices = list(
-                         "Diseño 2^k"               = "signos",
+                         "Diseño 2^k" = "signos",
                          "Regresión Lineal Múltiple" = "regresion_general"
                        ),
                        selected = "signos"),
-
+          
           hr(),
-
-          # Campo de número de factores (solo para diseños 2^k)
+          
+          # Número de factores (solo para diseños 2^k)
           conditionalPanel(
             condition = "input.modo_analisis == 'signos'",
-            numericInput("k_factorial",
+            numericInput("k_factorial", 
                          "Número de Factores (k):",
                          value = 3, min = 2, max = 6)
           ),
-
+          
+          # Número de réplicas (solo para diseños 2^k)
+          conditionalPanel(
+            condition = "input.modo_analisis == 'signos'",
+            numericInput("num_replicas",
+                         "Número de Réplicas:",
+                         value = 1, min = 1, max = 10)
+          ),
+          
           hr(),
-
-          actionButton("ejecutar_analisis",
+          
+          actionButton("ejecutar_analisis", 
                        "Ejecutar Análisis",
                        class = "btn btn-primary",
                        style = "margin-top:15px; font-size:16px;")
@@ -134,31 +142,31 @@ ui <- fluidPage(
 
             # ------------------- PESTAÑA 1: DISEÑO/DATOS --------------------
             tabPanel("📋 Datos de Entrada",
-
+                     
                      # Para diseños 2^k
                      conditionalPanel(
                        condition = "input.modo_analisis == 'signos'",
                        h3("Matriz de Diseño 2^k"),
-
+                       
                        div(class="instruccion",
                            p("Diseño factorial generado automáticamente. Ingresa los valores de respuesta.")
                        ),
-
+                       
                        tableOutput("tabla_diseno"),
                        hr(),
                        h4("Valores de Respuesta"),
                        uiOutput("inputs_respuesta")
                      ),
-
+                     
                      # Para regresión general
                      conditionalPanel(
                        condition = "input.modo_analisis == 'regresion_general'",
                        h3("Regresión Lineal Múltiple"),
-
+                       
                        div(class="instruccion",
                            p("Configura las variables y completa los datos de tu problema de regresión.")
                        ),
-
+                       
                        uiOutput("input_regresion_general")
                      )
             ),
@@ -166,41 +174,41 @@ ui <- fluidPage(
             # ------------------- PESTAÑA 2: RESULTADOS --------------------
             tabPanel("📊 Datos Completos",
                      h3("Tabla de Datos Completa"),
-
+                     
                      div(class="instruccion",
                          p("Presiona 'Ejecutar Análisis' para ver tus datos completos.")
                      ),
-
+                     
                      tableOutput("tabla_resultados")
             ),
 
             # ------------------- PESTAÑA 3: ANOVA --------------------
             tabPanel("📈 ANOVA",
                      h3("Análisis de Varianza"),
-
+                     
                      div(class="instruccion",
                          p("Significancia estadística de factores y/o variables.",
                            "Pr(>F) < 0.05 indica efectos significativos.")
                      ),
-
+                     
                      verbatimTextOutput("anova_output")
             ),
 
             # ------------------- PESTAÑA 4: INTERACCIÓN --------------------
             tabPanel("📌 Gráfica de Interacción",
                      h3("Interacción entre Factores"),
-
+                     
                      div(class="instruccion",
                          p("Solo disponible para diseños 2^k con al menos 2 factores.")
                      ),
-
+                     
                      plotOutput("grafica_interaccion", height = "450px")
             ),
 
             # ------------------- PESTAÑA 5: EFECTOS/COEFICIENTES --------------------
             tabPanel("✨ Efectos y Coeficientes",
                      h3("Resultados del Modelo"),
-
+                     
                      div(class="instruccion",
                          conditionalPanel(
                            condition = "input.modo_analisis == 'signos'",
@@ -211,11 +219,11 @@ ui <- fluidPage(
                            p("Coeficientes del modelo de regresión lineal múltiple con estadísticas de significancia.")
                          )
                      ),
-
+                     
                      tableOutput("tabla_efectos"),
-
+                     
                      hr(),
-
+                     
                      h3("Visualización Gráfica"),
                      plotOutput("grafica_efectos", height = "450px")
             )
